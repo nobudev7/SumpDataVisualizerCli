@@ -2,95 +2,111 @@ package org.example;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.DateAxis;
-import org.jfree.chart.axis.DateTickUnit;
-import org.jfree.chart.axis.DateTickUnitType;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.time.Second;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.TextAnchor;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ChartGenerator {
 
     public void generateChart(List<WaterLevelData> data, String title, String filePath, LocalDate chartDate) throws IOException {
-        TimeSeries series = new TimeSeries("Water Level");
+        XYSeries series = new XYSeries("");
         double maxWaterLevel = 0.0;
 
-        for (WaterLevelData d : data) {
-            Date date = Date.from(d.getTime().atDate(chartDate).atZone(ZoneId.systemDefault()).toInstant());
-            series.add(new Second(date), d.getWaterLevel());
+        List<ValueMarker> markers = new ArrayList<>();
+        Set<Integer> labeledHours = new HashSet<>();
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        for (int i = 0; i < data.size(); i++) {
+            WaterLevelData d = data.get(i);
+            series.add(i, d.getWaterLevel());
             if (d.getWaterLevel() > maxWaterLevel) {
                 maxWaterLevel = d.getWaterLevel();
             }
+
+            // Logic to find the first index for each 2-hour label
+            int currentHour = d.getTime().getHour();
+            if (currentHour % 2 == 0 && !labeledHours.contains(currentHour)) {
+                ValueMarker marker = new ValueMarker(i);
+                marker.setLabel(d.getTime().format(timeFormatter));
+                marker.setLabelFont(new Font("SansSerif", Font.PLAIN, 12));
+                marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
+                marker.setLabelAnchor(RectangleAnchor.BOTTOM);
+                marker.setPaint(Color.DARK_GRAY);
+                markers.add(marker);
+                labeledHours.add(currentHour);
+            }
         }
 
-        TimeSeriesCollection dataset = new TimeSeriesCollection(series);
-        JFreeChart chart = ChartFactory.createTimeSeriesChart(
+        XYSeriesCollection dataset = new XYSeriesCollection(series);
+        JFreeChart chart = ChartFactory.createXYLineChart(
                 title,
                 "Time",
                 "Water Level (cm)",
-                dataset,
-                false,
-                true,
-                false
+                dataset
         );
 
         // Customize chart
         chart.setBackgroundPaint(Color.WHITE);
 
         XYPlot plot = (XYPlot) chart.getPlot();
-        plot.setBackgroundPaint(Color.WHITE); // Make chart background really white
-        plot.setDomainGridlinesVisible(false); // No vertical grid lines
-        plot.setRangeGridlinePaint(Color.DARK_GRAY); // Only horizontal grid lines
-        plot.getRenderer().setSeriesPaint(0, new Color(50, 150, 255)); // Brighter blue line color
-        plot.setOutlineVisible(false); // No surrounding solid line on the chart
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinePaint(Color.DARK_GRAY);
+        plot.getRenderer().setSeriesPaint(0, new Color(50, 150, 255));
+        plot.setOutlineVisible(false);
 
-        // Customize Y-axis (ValueAxis)
-        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-        rangeAxis.setLowerBound(6.0); // Y axis bottom is always 6 cm.
-        if (maxWaterLevel > 20.0) {
-            rangeAxis.setUpperBound(50.0); // max is at 50 cm if data point more than 20 cm
-            rangeAxis.setTickUnit(new NumberTickUnit(5.0)); // 5 cm interval
-        } else {
-            rangeAxis.setUpperBound(20.0); // Y axis max is always 20 cm
-            rangeAxis.setTickUnit(new NumberTickUnit(2.0)); // 2 cm interval
+        // Add the custom time labels as markers
+        for (ValueMarker marker : markers) {
+            plot.addDomainMarker(marker);
         }
 
-        // Customize X-axis (DateAxis)
-        DateAxis domainAxis = (DateAxis) plot.getDomainAxis();
-        domainAxis.setRange(
-                Date.from(chartDate.atStartOfDay(ZoneId.systemDefault()).toInstant()),
-                Date.from(chartDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
-        ); // X axis is always from 0:00 to 0:00 for the day
-        domainAxis.setTickUnit(new DateTickUnit(DateTickUnitType.HOUR, 2)); // Make time label 2 hour interval
-        domainAxis.setDateFormatOverride(new SimpleDateFormat("HH:mm")); // Format time label as HH:mm
+        // Customize Y-axis (Range Axis)
+        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        rangeAxis.setLowerBound(6.0);
+        if (maxWaterLevel > 20.0) {
+            rangeAxis.setUpperBound(50.0);
+            rangeAxis.setTickUnit(new NumberTickUnit(5.0));
+        } else {
+            rangeAxis.setUpperBound(20.0);
+            rangeAxis.setTickUnit(new NumberTickUnit(2.0));
+        }
+
+        // Customize X-axis (Domain Axis)
+        NumberAxis domainAxis = (NumberAxis) plot.getDomainAxis();
+        domainAxis.setTickLabelsVisible(false); // Hide default numerical labels
+        domainAxis.setTickMarksVisible(false); // Hide tick marks
+        domainAxis.setAxisLineVisible(true); // Ensure the axis line itself is visible
 
         // Create image with margin and save
         int width = 1600;
-        int height = 900; // Make PNG height to 900 px.
-        int margin = 20; // 20px margin
+        int height = 900;
+        int margin = 20;
 
         BufferedImage image = new BufferedImage(width + margin, height + margin, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
         g2.setColor(Color.WHITE);
         g2.fillRect(0, 0, width + margin, height + margin);
 
-        // Draw chart with margin on top, no margin on left/bottom, and margin on right
         chart.draw(g2, new Rectangle2D.Double(0, margin, width, height));
         g2.dispose();
 
