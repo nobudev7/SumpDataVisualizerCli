@@ -8,7 +8,7 @@ import org.jfree.chart.axis.DateTickUnitType;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.time.Minute;
+import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
@@ -33,7 +33,7 @@ public class ChartGenerator {
 
         for (WaterLevelData d : data) {
             Date date = Date.from(d.getTime().atDate(chartDate).atZone(ZoneId.systemDefault()).toInstant());
-            series.add(new Minute(date), d.getWaterLevel());
+            series.add(new Second(date), d.getWaterLevel());
             if (d.getWaterLevel() > maxWaterLevel) {
                 maxWaterLevel = d.getWaterLevel();
             }

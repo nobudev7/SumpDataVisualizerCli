@@ -40,7 +40,7 @@ public class Main {
                                 ChartGenerator chartGenerator = new ChartGenerator();
                                 String chartTitle = "Water Level on " + chartDate.format(titleDateFormatter);
                                 String outputFilePath = outputSubDir.resolve("waterlevel-" + dateString + ".png").toString();
-
+                                System.out.println("Start generating chart for " + chartDate.format(titleDateFormatter) + " at " + outputFilePath);
                                 chartGenerator.generateChart(data, chartTitle, outputFilePath, chartDate);
                                 System.out.println("Generated chart for " + chartDate.format(titleDateFormatter) + " at " + outputFilePath);
 
