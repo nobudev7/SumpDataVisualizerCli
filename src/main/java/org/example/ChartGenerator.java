@@ -4,56 +4,42 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
-import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.ui.RectangleAnchor;
-import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.FieldPosition;
+import java.text.NumberFormat;
+import java.text.ParsePosition;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class ChartGenerator {
 
     public void generateChart(List<WaterLevelData> data, String title, String filePath, LocalDate chartDate) throws IOException {
+        if (data == null || data.isEmpty()) {
+            System.out.println("No data available to generate chart for " + title);
+            return;
+        }
+
         XYSeries series = new XYSeries("");
         double maxWaterLevel = 0.0;
-
-        List<ValueMarker> markers = new ArrayList<>();
-        Set<Integer> labeledHours = new HashSet<>();
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
         for (int i = 0; i < data.size(); i++) {
             WaterLevelData d = data.get(i);
             series.add(i, d.getWaterLevel());
             if (d.getWaterLevel() > maxWaterLevel) {
                 maxWaterLevel = d.getWaterLevel();
-            }
-
-            // Logic to find the first index for each 2-hour label
-            int currentHour = d.getTime().getHour();
-            if (currentHour % 2 == 0 && !labeledHours.contains(currentHour)) {
-                ValueMarker marker = new ValueMarker(i);
-                marker.setLabel(d.getTime().format(timeFormatter));
-                marker.setLabelFont(new Font("SansSerif", Font.PLAIN, 12));
-                marker.setLabelTextAnchor(TextAnchor.TOP_CENTER);
-                marker.setLabelAnchor(RectangleAnchor.BOTTOM);
-                marker.setPaint(Color.DARK_GRAY);
-                markers.add(marker);
-                labeledHours.add(currentHour);
             }
         }
 
@@ -70,15 +56,10 @@ public class ChartGenerator {
 
         XYPlot plot = (XYPlot) chart.getPlot();
         plot.setBackgroundPaint(Color.WHITE);
-        plot.setDomainGridlinesVisible(false);
-        plot.setRangeGridlinePaint(Color.DARK_GRAY);
+        plot.setDomainGridlinesVisible(false); // No vertical grid lines
+        plot.setRangeGridlinePaint(Color.DARK_GRAY); // Only horizontal grid lines
         plot.getRenderer().setSeriesPaint(0, new Color(50, 150, 255));
         plot.setOutlineVisible(false);
-
-        // Add the custom time labels as markers
-        for (ValueMarker marker : markers) {
-            plot.addDomainMarker(marker);
-        }
 
         // Customize Y-axis (Range Axis)
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
@@ -93,9 +74,33 @@ public class ChartGenerator {
 
         // Customize X-axis (Domain Axis)
         NumberAxis domainAxis = (NumberAxis) plot.getDomainAxis();
-        domainAxis.setTickLabelsVisible(false); // Hide default numerical labels
-        domainAxis.setTickMarksVisible(false); // Hide tick marks
+        domainAxis.setTickLabelsVisible(true); // Show tick labels
+        domainAxis.setTickMarksVisible(true); // Show tick marks
         domainAxis.setAxisLineVisible(true); // Ensure the axis line itself is visible
+
+        // Dynamically calculate tick unit based on data density
+        int totalPoints = data.size();
+        LocalTime startTime = data.get(0).getTime();
+        LocalTime endTime = data.get(totalPoints - 1).getTime();
+        long durationInSeconds = Duration.between(startTime, endTime).getSeconds();
+        
+        // Handle overnight or DST cases where duration might be negative
+        if (durationInSeconds < 0) {
+            durationInSeconds += 24 * 3600;
+        }
+        if (durationInSeconds == 0) durationInSeconds = 1; // Avoid division by zero
+
+        double pointsPerSecond = (double) totalPoints / durationInSeconds;
+        int pointsPerHour = (int) (pointsPerSecond * 3600);
+
+        if (pointsPerHour > 0) {
+            domainAxis.setTickUnit(new NumberTickUnit(pointsPerHour));
+        } else {
+            // Fallback for very sparse data
+            domainAxis.setTickUnit(new NumberTickUnit(totalPoints / 24.0));
+        }
+        
+        domainAxis.setNumberFormatOverride(new CustomTimeFormat(data));
 
         // Create image with margin and save
         int width = 1600;
@@ -111,5 +116,34 @@ public class ChartGenerator {
         g2.dispose();
 
         ImageIO.write(image, "png", new File(filePath));
+    }
+
+    // Inner class for custom time formatting on the NumberAxis
+    private static class CustomTimeFormat extends NumberFormat {
+        private final List<WaterLevelData> data;
+        private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        public CustomTimeFormat(List<WaterLevelData> data) {
+            this.data = data;
+        }
+
+        @Override
+        public StringBuffer format(double number, StringBuffer toAppendTo, FieldPosition pos) {
+            int index = (int) Math.round(number);
+            if (index >= 0 && index < data.size()) {
+                return toAppendTo.append(data.get(index).getTime().format(timeFormatter));
+            }
+            return toAppendTo.append(""); // Return empty string for out-of-bounds indices
+        }
+
+        @Override
+        public StringBuffer format(long number, StringBuffer toAppendTo, FieldPosition pos) {
+            return format((double) number, toAppendTo, pos); // Delegate to the double version
+        }
+
+        @Override
+        public Number parse(String source, ParsePosition parsePosition) {
+            return null; // Not needed for formatting
+        }
     }
 }
