@@ -28,7 +28,7 @@ import java.util.List;
 
 public class ChartGenerator {
 
-    public void generateChart(List<WaterLevelData> data, String title, String filePath, LocalDate chartDate) throws IOException {
+    public void generateChart(List<WaterLevelData> data, String title, String filePath) throws IOException {
         if (data == null || data.isEmpty()) {
             System.out.println("No data available to generate chart for " + title);
             return;
@@ -36,12 +36,16 @@ public class ChartGenerator {
 
         XYSeries series = new XYSeries("");
         double maxWaterLevel = 0.0;
+        double minWaterLevel = Double.MAX_VALUE; // Initialize with a very large value
 
         for (int i = 0; i < data.size(); i++) {
             WaterLevelData d = data.get(i);
             series.add(i, d.getWaterLevel());
             if (d.getWaterLevel() > maxWaterLevel) {
                 maxWaterLevel = d.getWaterLevel();
+            }
+            if (d.getWaterLevel() < minWaterLevel) {
+                minWaterLevel = d.getWaterLevel();
             }
         }
 
@@ -65,7 +69,13 @@ public class ChartGenerator {
 
         // Customize Y-axis (Range Axis)
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-        rangeAxis.setLowerBound(6.0);
+        // Dynamically set lower bound
+        if (minWaterLevel < 6.0) {
+            rangeAxis.setLowerBound(minWaterLevel);
+        } else {
+            rangeAxis.setLowerBound(6.0);
+        }
+        
         if (maxWaterLevel > 20.0) {
             rangeAxis.setUpperBound(50.0);
             rangeAxis.setTickUnit(new NumberTickUnit(5.0));
