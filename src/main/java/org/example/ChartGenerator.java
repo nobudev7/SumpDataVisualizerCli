@@ -92,6 +92,7 @@ public class ChartGenerator {
         // Set custom domain axis for precise hourly ticks
         plot.setDomainAxis(new HourlyNumberAxis(data));
         plot.getDomainAxis().setLabel("Time");
+        plot.getDomainAxis().setLabelFont(plot.getDomainAxis().getLabelFont().deriveFont(16f));
 
         // Create image with margin and save
         int width = 1600;
