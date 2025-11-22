@@ -8,4 +8,6 @@ This is similar to my [SumpChart project](https://github.com/nobudev7/sumpchart)
 
 ## Libraries
 - JFreeChart
-- Appache Commons Cli
+- Apache Commons Cli
+
+![Sample Chart](assets/sample.png)
