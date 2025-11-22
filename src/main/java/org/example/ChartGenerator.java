@@ -7,6 +7,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTick;
 import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.axis.Tick;
+import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
@@ -34,7 +35,7 @@ public class ChartGenerator {
             return;
         }
 
-        XYSeries series = new XYSeries("");
+        XYSeries series = new XYSeries("Time");
         double maxWaterLevel = 0.0;
         double minWaterLevel = Double.MAX_VALUE; // Initialize with a very large value
 
@@ -52,9 +53,13 @@ public class ChartGenerator {
         XYSeriesCollection dataset = new XYSeriesCollection(series);
         JFreeChart chart = ChartFactory.createXYLineChart(
                 title,
-                null, // No X-axis label
-                null, // No Y-axis label
-                dataset
+                "Time", // X-axis label
+                "Water Level (cm)", // Y-axis label
+                dataset,
+                PlotOrientation.VERTICAL,
+                false, // Do not create legend
+                false, // No tooltips
+                false // No URLs
         );
 
         // Customize chart
@@ -86,6 +91,7 @@ public class ChartGenerator {
 
         // Set custom domain axis for precise hourly ticks
         plot.setDomainAxis(new HourlyNumberAxis(data));
+        plot.getDomainAxis().setLabel("Time");
 
         // Create image with margin and save
         int width = 1600;
