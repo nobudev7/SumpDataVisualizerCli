@@ -8,10 +8,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import java.io.FileWriter;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class Main {
     public static void main(String[] args) {
@@ -84,5 +92,43 @@ public class Main {
         } catch (IOException e) {
             System.err.println("Walk failed: " + inputDir);
         }
+
+        try {
+            generateFileListJson(outputDir);
+        } catch (IOException e) {
+            System.err.println("Failed to generate file-list.json: " + e.getMessage());
+        }
+    }
+
+    private static void generateFileListJson(String outputDir) throws IOException {
+        System.out.println("Generating file-list.json...");
+        Map<String, Map<String, List<String>>> fileTree = new TreeMap<>();
+
+        try (Stream<Path> paths = Files.walk(Paths.get(outputDir))) {
+            paths.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".png"))
+                    .forEach(path -> {
+                        Path relativePath = Paths.get(outputDir).relativize(path);
+                        String year = relativePath.getParent().getParent().getFileName().toString();
+                        String month = relativePath.getParent().getFileName().toString();
+                        String webPath = "output/" + relativePath.toString().replace('\\', '/'); // Add output/ prefix and ensure forward slashes
+
+                        fileTree.computeIfAbsent(year, k -> new HashMap<>()) // Use HashMap to preserve month order
+                                .computeIfAbsent(month, k -> new ArrayList<>())
+                                .add(webPath);
+                    });
+        }
+
+        // Sort the file lists
+        fileTree.values().forEach(months -> months.values().forEach(Collections::sort));
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String json = gson.toJson(fileTree);
+
+        Path jsonFilePath = Paths.get(outputDir, "file-list.json");
+        try (FileWriter writer = new FileWriter(jsonFilePath.toFile())) {
+            writer.write(json);
+        }
+        System.out.println("Generated file-list.json at " + jsonFilePath);
     }
 }

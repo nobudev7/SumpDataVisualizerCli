@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const charts = document.getElementById('charts');
     let fileTree = {};
 
-    fetch('file-list.json')
+    fetch('output/file-list.json')
         .then(response => response.json())
         .then(data => {
             fileTree = data;
