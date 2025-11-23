@@ -1,0 +1,86 @@
+:root {
+    --pico-off-white: #f0f0f0;
+}
+
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent main page scrolling */
+}
+
+h1 {
+    text-align: center;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+    height: 100%; /* Ensure grid takes full height */
+    grid-column-gap: unset;
+
+}
+
+aside {
+    background-color: var(--pico-off-white); /* Pale gray */
+    border-right: 1px solid #ccc;
+    padding-right: 2rem; /* Keep right padding for overall margin */
+    padding-top: 1rem; /* Add some padding to the top */
+    height: 100%; /* Take full height of grid cell */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+article#charts {
+    background-color: white;
+    padding-left: 1rem; /* Add some padding to the left */
+    height: 100%; /* Take full height of grid cell */
+    overflow-y: auto; /* Enable vertical scrolling */
+    margin: 0;
+    background-radius: 0;
+    box-shadow: none;
+}
+
+#charts img {
+    max-width: 1000px;
+    width: 95%;
+    height: auto;
+    margin-bottom: 2rem; /* Increased spacing */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#navigation ul {
+    list-style: none;
+    padding: 0;
+    margin-left: auto; /* Push the entire navigation list to the right */
+    width: fit-content; /* Allow the ul to shrink to content width */
+}
+
+#navigation ul li {
+    cursor: pointer;
+    padding: 0.25rem 0;
+    text-align: left; /* Ensure year text is left-aligned */
+}
+
+#navigation ul li {
+}
+
+#navigation ul li.year-heading {
+    font-size: 1.3rem; /* Smaller font size for year text */
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+}
+
+
+
+/* Override Pico.css button padding for navigation buttons */
+
+aside#navigation ul li a[role="button"] {
+    display: block; /* Make button take full width of its container */
+    text-align: left; /* Left-align text within the button */
+    font-size: 0.85rem;
+    padding: 0.25rem;
+    margin-bottom: 0;
+}
