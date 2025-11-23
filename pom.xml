@@ -36,7 +36,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.example.Main</mainClass>
+                            <mainClass>com.nobudev7.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

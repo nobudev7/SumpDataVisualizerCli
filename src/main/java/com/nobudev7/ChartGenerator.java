@@ -1,4 +1,4 @@
-package org.example;
+package com.nobudev7;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -21,7 +21,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -69,7 +68,7 @@ public class ChartGenerator {
         plot.setBackgroundPaint(Color.WHITE);
         plot.setDomainGridlinesVisible(false);
         plot.setRangeGridlinePaint(Color.DARK_GRAY);
-        plot.getRenderer().setSeriesPaint(0, new Color(50, 150, 255));
+        plot.getRenderer().setSeriesPaint(0, new Color(42, 103, 194));
         plot.setOutlineVisible(false);
 
         // Customize Y-axis (Range Axis)

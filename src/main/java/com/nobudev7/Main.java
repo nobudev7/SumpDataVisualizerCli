@@ -1,4 +1,4 @@
-package org.example;
+package com.nobudev7;
 
 import org.apache.commons.cli.*;
 
