@@ -11,3 +11,9 @@ This is similar to my [SumpChart project](https://github.com/nobudev7/sumpchart)
 - Apache Commons Cli
 
 ![Sample Chart](assets/sample.png)
+
+
+## Usage
+```shell
+java -jar target/SumpDataVisualizer-1.0-SNAPSHOT-jar-with-dependencies.jar -i src/test/data -o html/output
+```
