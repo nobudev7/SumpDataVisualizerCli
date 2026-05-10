@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadImages(year, month) {
         charts.innerHTML = '<h1>Sump Water Level</h1>'; // Re-add title as it's cleared
-        const images = fileTree[year][month];
+        const images = [...fileTree[year][month]].reverse();
         images.forEach(imagePath => {
             const img = document.createElement('img');
             img.src = imagePath;
